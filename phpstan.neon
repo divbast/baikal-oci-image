@@ -14,9 +14,9 @@ parameters:
         - test/probe
 
     # Scanned for definitions, not analysed. test/probe/app.php runs beside
-    # divbast/ci's core probe, and uses what it defines.
+    # divbast/ci's PHP probe, probe.php, and uses what it defines.
     scanFiles:
         - stubs/baikal-image.php
-        - .ci/harness/probe/core.php
+        - .ci/harness/probe/php/probe.php
     dynamicConstantNames:
         - BAIKAL_VERSION

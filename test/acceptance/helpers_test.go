@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/divbast/baikal-oci-image/test/probe"
 	"github.com/divbast/ci/harness"
 )
 
@@ -37,7 +36,7 @@ func userSpec(image, volume string) *harness.ServeSpec {
 		AppPort:    appPort,
 		HealthPort: healthPort,
 		ReadyPath:  "/dav.php",
-		ProbeApp:   probe.App,
+		Probe:      harness.ProbeSpec{PHP: phpProbe},
 	}
 }
 

@@ -97,7 +97,7 @@ func coldStart(t *testing.T, e harness.Engine, image string, s *harness.Serving)
 	}
 	engineHealthy(t, e, image, s.C, "engine reports the container healthy")
 
-	harness.RunRecords(t, s.Probe, "seed-user", davUser, davPassword)
+	harness.RunPHPRecords(t, s.Probe, "seed-user", davUser, davPassword)
 	resp, err := dav(ctx, s, methodPropfind, principalPath, http.Header{"Depth": {"0"}}, "")
 	harness.Answers(t, "authenticated PROPFIND", http.StatusMultiStatus, resp, err)
 	resp, err = dav(ctx, s, methodMkcalendar, calendarPath, nil, "")

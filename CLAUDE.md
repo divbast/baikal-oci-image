@@ -46,11 +46,13 @@ breaking change.
 | Property | Value |
 |---|---|
 | Capabilities | **none** (`--cap-drop ALL`) |
+| Privileges | **no new ones** (`--security-opt no-new-privileges`), under the engine's **seccomp** filter |
 | Root filesystem | **read-only** |
 | User | uid/gid **65532**, never root |
 | Listen port | **8080** for DAV — never 80; `/healthz` there answers **404** |
 | Health port | **8081** — health only, never serves DAV, meant to stay unpublished |
-| tmpfs required | exactly one: `/tmp`, sized: `/tmp:size=512m` |
+| tmpfs required | exactly one: `/tmp`, sized: `/tmp:size=512m`, `noexec,nosuid,nodev` |
+| Writable mounts | `/tmp` and the volume at `/data` alone, the one declared mount the contract's `writable-mounts` sets aside; on Podman, `--read-only-tmpfs=false` |
 | Volume required | exactly one: `/data` |
 | Outbound network | **none** |
 | Healthy | the shipped probe: `/healthz` **200** and `GET /dav.php` **exactly 401** |
@@ -119,21 +121,22 @@ breaking change.
 - **The FrankenPHP binary comes from `ghcr.io/divbast/frankenphp:baikal`,
   and from nowhere else.** The Containerfile copies it in with one
   `COPY --from=`, by tag and digest, and app-check's build job runs
-  `divbast-verify-frankenphp` before it builds anything, and verifies that
+  `divbast-verify-images` before it builds anything, which verifies that
   the digest the `COPY --from=` names was attested by divbast/frankenphp's
-  own build on its `main`. How the binary is made lives in
+  own build on its `main`, and that the distroless project signed the
+  runtime's. How the binary is made lives in
   [divbast/frankenphp](https://github.com/divbast/frankenphp): the builder
   image, PHP, Caddy, its plugins, xcaddy and static-php-cli are pinned
   there; its build fails if the binary's build info disagrees with a pin or
   its extensions differ from Baikal's list; and it records the C libraries
   static-php-cli still takes at their newest release. Any change there
   reaches this image only through a PR that moves the `:baikal` digest,
-  which Renovate opens. `divbast-verify-frankenphp` counts every mention
-  of the image in the Containerfile's instructions, wherever it stands,
-  and refuses all but exactly one, that `COPY`'s `--from=`: never name the
-  image in an `ARG`, a `LABEL` or a `RUN`. A local `just build` does not
-  verify the attestation; `just ci-tools && .ci/bin/divbast-verify-frankenphp`
-  does, with gh 2.102.0 or newer logged in
+  which Renovate opens. `divbast-verify-images` refuses any image not
+  pinned by digest, and the FrankenPHP image named anywhere but that
+  `COPY`'s `--from=`: never name it in an `ARG`, a `LABEL` or a `RUN`. A
+  local `just build` does not verify; `just ci-tools &&
+  .ci/bin/divbast-verify-images` does, with gh 2.102.0 or newer logged in
+  and cosign from `mise.toml`
 - **The binary must never carry a file capability.** The official FrankenPHP build
   carries `cap_net_bind_service=ep`, and a binary with a file capability cannot be
   exec'd at all under `--cap-drop ALL` — it dies with `Operation not permitted`
@@ -185,7 +188,7 @@ breaking change.
   fresh clone, and again whenever the pin moves; `just lint` fails, naming
   it, when `.ci` is not at the pinned commit (`ci-fresh`)
 - `just build` — build the image locally. Needs no token. Unlike CI, it
-  does not verify the FrankenPHP binary's attestation
+  does not verify the images it builds from
 - `just test` — build, then run the Go acceptance suite against it, through
   `divbast-testcount`, which fails a run in which any test skipped
 - `just lint` — from common.just, `ci-fresh`, pinact, zizmor, actionlint,
@@ -200,10 +203,10 @@ breaking change.
 ## Where the toolchain comes from
 
 - **`mise.toml` is where tool versions are written.** Go, golangci-lint,
-  hadolint, ShellCheck, shfmt, actionlint, reuse, just, pinact, trivy and
-  zizmor are all listed there. Every justfile recipe that runs one of them goes
-  through `mise exec`, so a recipe resolves those binaries and not a
-  same-named one on PATH. The exceptions run none: `setup`, which installs
+  hadolint, ShellCheck, shfmt, actionlint, reuse, just, pinact, trivy,
+  zizmor and cosign are all listed there. Every justfile recipe that runs
+  one of them goes through `mise exec`, so a recipe resolves those
+  binaries and not a same-named one on PATH. The exceptions run none: `setup`, which installs
   them, `ci-checkout`, which runs before them, and `ci-fresh` and
   `_github-token`, which call only git, just and the freshly built
   `divbast-pin`

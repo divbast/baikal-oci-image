@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/divbast/baikal-oci-image/test/probe"
 	"github.com/divbast/ci/harness"
 )
 
@@ -51,7 +50,7 @@ func olderSpec(image, volume string) *harness.ServeSpec {
 		},
 		AppPort:   appPort,
 		ReadyPath: "/dav.php",
-		ProbeApp:  probe.App,
+		Probe:     harness.ProbeSpec{PHP: phpProbe},
 	}
 }
 
@@ -69,22 +68,22 @@ func TestUpgradeFromPrevious(t *testing.T) {
 	t.Run("previous-image", func(t *testing.T) {
 		s := serveNamed(t, e, olderSpec(previousImage, volume), "the published image serves")
 		ctx := t.Context()
-		harness.RunRecords(t, s.Probe, "seed-user", davUser, davPassword)
-		harness.RunRecords(t, s.Probe, "seed-user", sharee, shareePass)
+		harness.RunPHPRecords(t, s.Probe, "seed-user", davUser, davPassword)
+		harness.RunPHPRecords(t, s.Probe, "seed-user", sharee, shareePass)
 		resp, err := dav(ctx, s, methodMkcalendar, calendarPath, nil, "")
 		harness.Answers(t, "MKCALENDAR on the published image", http.StatusCreated, resp, err)
 		resp, err = putEvent(ctx, s)
 		harness.Answers(t, "PUT event on the published image", http.StatusCreated, resp, err)
 		// The shape a share had before 0.13.0, which its migration rebuilds
-		harness.RunRecords(t, s.Probe, "seed-share", davUser, sharee, "null")
+		harness.RunPHPRecords(t, s.Probe, "seed-share", davUser, sharee, "null")
 	})
 	t.Run("this-image", func(t *testing.T) {
 		s := serveNamed(t, e, userSpec(image, volume), "this image serves the upgraded volume")
 		harness.StatusIs(t, s, "/dav.php after the upgrade", http.StatusUnauthorized, "/dav.php")
 		harness.StatusIs(t, s.Health(), "/healthz after the upgrade", http.StatusOK, "/healthz")
-		harness.RunRecords(t, s.Probe, "assert-current-version")
-		harness.RunRecords(t, s.Probe, "assert-schema")
-		harness.RunRecords(t, s.Probe, "assert-share", davUser, sharee)
+		harness.RunPHPRecords(t, s.Probe, "assert-current-version")
+		harness.RunPHPRecords(t, s.Probe, "assert-schema")
+		harness.RunPHPRecords(t, s.Probe, "assert-share", davUser, sharee)
 		eventSurvived(t, s, "event from the published image survived the upgrade")
 	})
 }
@@ -104,14 +103,14 @@ func TestServesPreMoveVolume(t *testing.T) {
 	t.Run("pre-move-image", func(t *testing.T) {
 		s := serveNamed(t, e, olderSpec(preMoveImage, volume), "the pre-move image serves")
 		ctx := t.Context()
-		harness.RunRecords(t, s.Probe, "seed-user", davUser, davPassword)
-		harness.RunRecords(t, s.Probe, "seed-user", sharee, shareePass)
+		harness.RunPHPRecords(t, s.Probe, "seed-user", davUser, davPassword)
+		harness.RunPHPRecords(t, s.Probe, "seed-user", sharee, shareePass)
 		resp, err := dav(ctx, s, methodMkcalendar, calendarPath, nil, "")
 		harness.Answers(t, "MKCALENDAR on the pre-move image", http.StatusCreated, resp, err)
 		resp, err = putEvent(ctx, s)
 		harness.Answers(t, "PUT event on the pre-move image", http.StatusCreated, resp, err)
 		// 0.13.0's schema takes a share only in the shape sabre writes one
-		harness.RunRecords(t, s.Probe, "seed-share", davUser, sharee, "accepted")
+		harness.RunPHPRecords(t, s.Probe, "seed-share", davUser, sharee, "accepted")
 		resp, err = dav(ctx, s, methodMkcol, addressbookPath, http.Header{"Content-Type": {"application/xml"}}, mkcolAddressbook)
 		harness.Answers(t, "MKCOL addressbook on the pre-move image", http.StatusCreated, resp, err)
 		resp, err = dav(ctx, s, http.MethodPut, contactPath, http.Header{"Content-Type": {"text/vcard"}}, contact)
@@ -121,8 +120,8 @@ func TestServesPreMoveVolume(t *testing.T) {
 		s := serveNamed(t, e, userSpec(image, volume), "this image serves the pre-move volume")
 		harness.StatusIs(t, s, "/dav.php after the move", http.StatusUnauthorized, "/dav.php")
 		harness.StatusIs(t, s.Health(), "/healthz after the move", http.StatusOK, "/healthz")
-		harness.RunRecords(t, s.Probe, "assert-current-version")
-		harness.RunRecords(t, s.Probe, "assert-share", davUser, sharee)
+		harness.RunPHPRecords(t, s.Probe, "assert-current-version")
+		harness.RunPHPRecords(t, s.Probe, "assert-share", davUser, sharee)
 		eventSurvived(t, s, "event from the pre-move image survived the move")
 		const what = "contact from the pre-move image survived the move"
 		if resp, err := dav(t.Context(), s, http.MethodGet, contactPath, nil, ""); err != nil {

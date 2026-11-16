@@ -19,7 +19,7 @@ func TestPHPSettings(t *testing.T) {
 	e, image := underTest(t)
 	s := serve(t, e, userSpec(image, newVolume(t, e)))
 
-	harness.RunRecords(t, s.Probe, "assert-ini")
+	harness.RunPHPRecords(t, s.Probe, "assert-ini")
 
 	// /dav.php's 401 is sabre/dav's, so PHP wrote the response, and would
 	// have added the header to it

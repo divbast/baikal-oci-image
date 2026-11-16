@@ -19,11 +19,11 @@ const refusedExit = 1
 // the second fails the shipped probe too.
 func databaseFaults(t *testing.T, s *harness.Serving) {
 	t.Helper()
-	harness.RunRecords(t, s.Probe, "damage-db")
+	harness.RunPHPRecords(t, s.Probe, "damage-db")
 	harness.StatusIs(t, s.Health(), "/healthz with the database damaged", http.StatusServiceUnavailable, "/healthz")
 	harness.StatusIs(t, s, "/dav.php with the database damaged", http.StatusUnauthorized, "/dav.php")
 
-	harness.RunRecords(t, s.Probe, "remove-db")
+	harness.RunPHPRecords(t, s.Probe, "remove-db")
 	harness.StatusIs(t, s.Health(), "/healthz with the database removed", http.StatusServiceUnavailable, "/healthz")
 	const exits = "baikal-health exits 1 with the database removed"
 	if code, err := healthProbeExit(t.Context(), s.C); err != nil {
