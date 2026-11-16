@@ -6,21 +6,22 @@
 declare(strict_types=1);
 
 /*
- * Baikal's own subcommands for divbast's in-container probe. The harness
- * installs this beside its core.php, which requires it and adds what it
- * returns to its own subcommands:
+ * Baikal's own subcommands for divbast's in-container probe, which must
+ * run under the image's own PHP. The harness writes this beside its PHP
+ * probe, probe.php, in the container's /tmp, which requires it and runs
+ * what it returns:
  *
- *     frankenphp php-cli core.php <subcommand> [arguments]
+ *     frankenphp php-cli probe.php <subcommand> [arguments]
  *
- * Each asserts what it did, or what it found, in core.php's records,
+ * Each asserts what it did, or what it found, in probe.php's records,
  * under the record names the earlier bash suite (in git history) gave
- * them, where it had the check. core.php hands every app subcommand
+ * them, where it had the check. probe.php hands every app subcommand
  * whatever operands it was given, so each checks its own count, and one
- * given the wrong number throws, which core.php records as a failure.
- * Each may use what core.php defines: its Assertions and readOrThrow().
+ * given the wrong number throws, which probe.php records as a failure.
+ * Each may use what probe.php defines: its Assertions and readOrThrow().
  *
  * The upgrade tests run seed-user and seed-share inside the images
- * published before this suite existed, so this file, and core.php, must
+ * published before this suite existed, so this file, and probe.php, must
  * load in their PHP too.
  */
 

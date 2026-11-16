@@ -20,7 +20,7 @@ const driftedFrom = "0.10.1"
 // an older image would have left it.
 func driftFrom(t *testing.T, s *harness.Serving) {
 	t.Helper()
-	harness.RunRecords(t, s.Probe, "set-version", driftedFrom)
+	harness.RunPHPRecords(t, s.Probe, "set-version", driftedFrom)
 }
 
 // upgraded is the second half of version drift, on a new container started
@@ -31,6 +31,6 @@ func upgraded(t *testing.T, s *harness.Serving) {
 	t.Helper()
 	harness.StatusIs(t, s, "/dav.php after version drift", http.StatusUnauthorized, "/dav.php")
 	harness.LogContains(t, s.C, "Baikal's own upgrade ran from "+driftedFrom, "upgraded "+driftedFrom+" -> ")
-	harness.RunRecords(t, s.Probe, "assert-current-version")
+	harness.RunPHPRecords(t, s.Probe, "assert-current-version")
 	eventSurvived(t, s, "event survived the upgrade")
 }

@@ -72,7 +72,7 @@ func (ic *internalChecks) run(ctx context.Context, _ *harness.Container, p *harn
 // recording what each answered. The error is for a probe that could not
 // add her at all.
 func (ic *internalChecks) ask(ctx context.Context, p *harness.Probe) error {
-	seeded, err := p.Run(ctx, "seed-user", davUser, davPassword)
+	seeded, err := p.RunPHP(ctx, "seed-user", davUser, davPassword)
 	if err != nil {
 		return err
 	}

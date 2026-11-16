@@ -103,7 +103,7 @@ func TestBodyOverCapRefused(t *testing.T) {
 func withAddressbook(t *testing.T, s *harness.Serving) {
 	t.Helper()
 	ctx := t.Context()
-	records, err := s.Probe.Run(ctx, "seed-user", davUser, davPassword)
+	records, err := s.Probe.RunPHP(ctx, "seed-user", davUser, davPassword)
 	if err == nil && slices.ContainsFunc(records, func(r harness.Record) bool { return !r.OK }) {
 		err = fmt.Errorf("seed-user found %+v", records)
 	}
@@ -183,7 +183,7 @@ func (zeros) Read(p []byte) (int, error) {
 // tmpUsed returns how many bytes of /tmp are in use in c, as its own PHP
 // reads them.
 func tmpUsed(ctx context.Context, c *harness.Container) (int64, error) {
-	out, err := harness.PHPIn(ctx, c, `printf('%d', disk_total_space('/tmp') - disk_free_space('/tmp'));`)
+	out, err := harness.PHPIn(ctx, c, frankenphp, `printf('%d', disk_total_space('/tmp') - disk_free_space('/tmp'));`)
 	if err != nil {
 		return 0, err
 	}

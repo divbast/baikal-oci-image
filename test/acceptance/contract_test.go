@@ -24,13 +24,21 @@ const (
 	healthPort = 8081
 )
 
+// frankenphp is the image's PHP: the server, and the PHP its probe
+// subcommands and the suite's own run under.
+const frankenphp = "/usr/local/bin/frankenphp"
+
+// phpProbe is Baikal's own probe subcommands, app.php, which the harness
+// writes into a container's /tmp and runs under its PHP.
+var phpProbe = &harness.PHPProbe{Binary: frankenphp, Probe: probe.App}
+
 // serverArgv is the server's argv: what the bootstrap hands over to, with
 // pcntl_exec(SERVER_BIN, ['run', '--config', CADDYFILE]).
-var serverArgv = []string{harness.FrankenPHP, "run", "--config", "/etc/caddy/Caddyfile"}
+var serverArgv = []string{frankenphp, "run", "--config", "/etc/caddy/Caddyfile"}
 
 // healthCmd is the shipped health probe, as the image's HEALTHCHECK runs
 // it and a Podman user passes it with --health-cmd.
-var healthCmd = []string{harness.FrankenPHP, "php-cli", "/usr/local/bin/baikal-health"}
+var healthCmd = []string{frankenphp, "php-cli", "/usr/local/bin/baikal-health"}
 
 // TestContract runs divbast's confinement contract against the image, on a
 // network with no route out: no capability, a read-only root, uid 65532,
@@ -48,6 +56,7 @@ func TestContract(t *testing.T) {
 		HealthPort: healthPort,
 		TmpfsSize:  tmpfsSize,
 		PID1:       serverArgv,
+		Exec:       []string{frankenphp, "version"},
 		HealthCmd:  healthCmd,
 		Healthcheck: contract.Healthcheck{
 			Test:        slices.Concat([]string{"CMD"}, healthCmd),
@@ -65,7 +74,7 @@ func TestContract(t *testing.T) {
 		// The health port's root, and DAV's own entry point: neither may
 		// answer there
 		HealthOnly404: []string{"/", "/dav.php"},
-		ProbeApp:      probe.App,
+		PHP:           phpProbe,
 		ReadyProbe:    internal.run,
 	})
 	internal.report(t)
