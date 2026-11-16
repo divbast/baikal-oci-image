@@ -25,10 +25,11 @@ the image, and the binary in it, yourself.
 | Property | Value |
 |---|---|
 | Capabilities | none (`--cap-drop ALL`) |
+| Privileges | no new ones (`--security-opt no-new-privileges`), under the engine's seccomp filter |
 | Root filesystem | read-only |
 | User | uid/gid 65532 (`nonroot`) |
 | Port | 8080 (DAV), 8081 (health, do not publish) |
-| tmpfs required | `/tmp`, sized `512m` |
+| tmpfs required | `/tmp`, sized `512m`, which nothing can run from (`noexec,nosuid,nodev`) |
 | Volume required | `/data` |
 | Request body | 64 MB at most; a larger one gets 413 |
 | PHP URL streams | off (`allow_url_fopen = Off`): `fopen()` refuses an `http://` or `ftp://` URL |
@@ -42,14 +43,19 @@ the image, and the binary in it, yourself.
 
 ```bash
 podman run -d --name baikal \
-  --cap-drop ALL --read-only \
+  --cap-drop ALL --read-only --read-only-tmpfs=false \
+  --security-opt no-new-privileges \
   --user 65532:65532 \
-  --tmpfs /tmp:size=512m \
+  --tmpfs /tmp:size=512m,noexec,nosuid,nodev \
   -v baikal-data:/data \
   -p 8080:8080 \
   -e BAIKAL_ADMIN_PASSWORD=... \
   ghcr.io/divbast/baikal:0.13.0
 ```
+
+`--read-only-tmpfs=false` is Podman's alone: without it, Podman mounts
+writable tmpfs of its own at `/run`, `/var/tmp` and elsewhere beside the
+read-only root. Docker takes the same command without it.
 
 `:0.13.0` names the Baikal version, and `:latest` the newest image. Each
 new image of a version moves that version's tag. The `:<version>-<arch>`
@@ -85,9 +91,10 @@ healthcheck is in the image config; a Podman user has to pass it explicitly:
 
 ```bash
 podman run -d --name baikal \
-  --cap-drop ALL --read-only \
+  --cap-drop ALL --read-only --read-only-tmpfs=false \
+  --security-opt no-new-privileges \
   --user 65532:65532 \
-  --tmpfs /tmp:size=512m \
+  --tmpfs /tmp:size=512m,noexec,nosuid,nodev \
   -v baikal-data:/data \
   -p 8080:8080 \
   -e BAIKAL_ADMIN_PASSWORD=... \
@@ -95,10 +102,17 @@ podman run -d --name baikal \
   ghcr.io/divbast/baikal:0.13.0
 ```
 
-Under a Quadlet, the equivalents of the tmpfs and the health check are:
+Under a Quadlet, the equivalents of the confinement, the tmpfs and the
+health check are:
 
 ```
-Tmpfs=/tmp:size=512m
+DropCapability=all
+ReadOnly=true
+ReadOnlyTmpfs=false
+NoNewPrivileges=true
+User=65532
+Group=65532
+Tmpfs=/tmp:size=512m,noexec,nosuid,nodev
 HealthCmd=["/usr/local/bin/frankenphp","php-cli","/usr/local/bin/baikal-health"]
 ```
 
