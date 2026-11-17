@@ -33,7 +33,7 @@ FROM ${RUNTIME_IMAGE}
 
 # The binary divbast/frankenphp builds for this image, by digest. CI
 # refuses it unless that repository's own build on main attested it.
-COPY --from=ghcr.io/divbast/frankenphp:baikal@sha256:5e7a902e6407866a2bbecd1d9d5460039b9b4b29ced4628db471094aeb48f55e --chmod=0755 /frankenphp /usr/local/bin/frankenphp
+COPY --from=ghcr.io/divbast/frankenphp:baikal@sha256:e4639370f8aac7cc1c16d4babbcbd2405a837bde2681d0f99d825def3d4fc41f --chmod=0755 /frankenphp /usr/local/bin/frankenphp
 COPY --from=fetch --chown=root:root /build/baikal /var/www/baikal
 COPY --chown=root:root caddy/Caddyfile /etc/caddy/Caddyfile
 COPY --chown=root:root php/baikal.ini /etc/frankenphp/php.d/baikal.ini
