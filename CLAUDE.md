@@ -204,7 +204,7 @@ breaking change.
 
 - **`mise.toml` is where tool versions are written.** Go, golangci-lint,
   hadolint, ShellCheck, shfmt, actionlint, reuse, just, pinact, trivy,
-  zizmor and cosign are all listed there. Every justfile recipe that runs
+  grype, zizmor and cosign are all listed there. Every justfile recipe that runs
   one of them goes through `mise exec`, so a recipe resolves those
   binaries and not a same-named one on PATH. The exceptions run none: `setup`, which installs
   them, `ci-checkout`, which runs before them, and `ci-fresh` and
