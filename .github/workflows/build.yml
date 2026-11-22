@@ -38,7 +38,7 @@ concurrency:
 jobs:
   check:
     name: check
-    uses: divbast/ci/.github/workflows/app-check.yml@f935096d8aa4f8e85efdfa6906f1006ae16071aa # v4.10.0
+    uses: divbast/ci/.github/workflows/app-check.yml@73699e1f3d8869476193e4405288c821fd27f982 # v4.12.0
     with:
       # PHPStan, which lint runs over the bootstrap, the health probe and
       # the acceptance suite's in-container subcommands
@@ -78,7 +78,7 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main'
       && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-    uses: divbast/ci/.github/workflows/app-publish.yml@f935096d8aa4f8e85efdfa6906f1006ae16071aa # v4.10.0
+    uses: divbast/ci/.github/workflows/app-publish.yml@73699e1f3d8869476193e4405288c821fd27f982 # v4.12.0
     with:
       image: ghcr.io/divbast/baikal
       version-arg: BAIKAL_VERSION
